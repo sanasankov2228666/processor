@@ -5,8 +5,8 @@ POPREG CX
 POPREG BX
 POPREG AX
 
-PUSHREG AX
 PUSH 0
+PUSHREG AX
 JE :line_сase;  проверка на линейность уравнения
 
 CALL :discr
@@ -87,7 +87,7 @@ JUMP :end_two
 
     PUSHREG CX
     PUSH 0
-    JE :end_inf
+    JA :end_inf
     JUMP :end_zero
 
 :end_inf

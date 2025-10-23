@@ -7,7 +7,7 @@ size_t size_file(FILE* stream);
 
 char** make_mass(char* buffer, size_t len);
 
-int changer(char** buffer, char param_old, char param_new);
+int changer(char** buffer);
 
 size_t n_check(char* buffer);
 

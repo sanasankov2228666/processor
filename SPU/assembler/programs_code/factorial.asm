@@ -9,8 +9,6 @@ POPREG CX; counter
 
 CALL :factorial
 
-CALL :end_out
-
 :factorial
 
     PUSHREG AX; Проверяем AX > 1
@@ -29,8 +27,8 @@ CALL :end_out
     
     PUSHREG CX
     PUSHREG AX
-    JBE :factorial
-    RET
+    JA :end_out
+    CALL :factorial
 
 :end_out
 

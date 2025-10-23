@@ -11,11 +11,8 @@
 //!чтение в один большой массив
 size_t file_read(FILE* stream, char** buffer)
 {
-    assert(stream != NULL);
-    assert(buffer != NULL);
-
     size_t number = size_file(stream);
-    *buffer = (char*)calloc((number+2), sizeof(**buffer));
+    *buffer = (char*)calloc((number + 2), sizeof(**buffer));
     if (*buffer == NULL)
     {
         printf("error in file read\n");
@@ -34,7 +31,6 @@ size_t file_read(FILE* stream, char** buffer)
 
 size_t size_file(FILE* stream)
 {
-    assert(stream != NULL);
     if (stream == NULL)
     {
         printf("error in size_file stream adres\n");
@@ -75,35 +71,29 @@ char** make_mass(char* buffer, size_t len)
 
         buffer_w[i] = ptr;
     }
-    
+
     return buffer_w;
 }
 
-int changer(char** buffer, char param_old, char param_new)
+int changer(char** buffer)
 {
-    assert(buffer != NULL);
-    if (buffer == NULL)
-    {
-        return -1;
-    }
-
     size_t i = 0;
 
     while ((*buffer)[i] != '\0')
     {
-        if ((*buffer)[i] == param_old)
-        {
-            (*buffer)[i] = param_new;
-        }
-
         if ((*buffer)[i] == ' ')
         {
-            (*buffer)[i] = param_new;
+            (*buffer)[i] = '\0';
+        }
+
+        if ((*buffer)[i] == '\n')
+        {
+            (*buffer)[i] = '\0';
         }
 
         if ((*buffer)[i] == ';')
         {
-            (*buffer)[i] = param_new;
+            (*buffer)[i] = '\0';
         }
 
         i++;
@@ -114,7 +104,6 @@ int changer(char** buffer, char param_old, char param_new)
 
 size_t n_check(char* buffer)
 {
-    assert(buffer != NULL);
     if (buffer == NULL)
     {
         printf("error in n_chech bufer adres\n");

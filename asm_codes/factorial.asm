@@ -1,39 +1,26 @@
 IN; Ввод числа n
-POPREG AX; Сохраняем n в регистр AX
-
-PUSH 1; Загружаем начальное значение факториала = 1
-POPREG BX; Сохраняем в BX (результат)
-
-PUSH 2
-POPREG CX; counter
+POPREG AX
 
 CALL :factorial
 
-CALL :end_out
+OUT
+HLT
 
 :factorial
-
-    PUSHREG AX; Проверяем AX > 1
-    PUSH 1
-    JB :end_out
-    
-    PUSHREG BX; BX = BX * AX
-    PUSHREG CX
-    MULT
-    POPREG BX
-    
-    PUSHREG CX; CX++
-    PUSH 1
-    ADD
-    POPREG CX
-    
-    PUSHREG CX
     PUSHREG AX
-    JBE :factorial
+
+    PUSHREG AX
+    PUSH 1
+    JE :end_out
+
+    PUSH 1
+    PUSHREG AX
+    SUB
+    POPREG AX
+
+    CALL :factorial
+
+    MULT
+
+    :end_out
     RET
-
-:end_out
-
-    PUSHREG BX; Выводим результат
-    OUT
-    HLT

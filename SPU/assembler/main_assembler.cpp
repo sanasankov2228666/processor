@@ -8,10 +8,19 @@
 
 typedef int type;
 
-int main(void)
+int main( int argc, char* argv[] )
 {
+    if (argc < 2)
+    {
+        printf("ERROR the code file was not specified\n");
+        return ERROR;
+    }
+
+    struct main_str assembler = {};
+
+    //printf("%s\n\n", argv[1]);
     //!открываем файл с командами
-    FILE* stream = file_opener("SPU/commands_in.asm", "rb", __FUNCTION__, __FILE__, __LINE__);
+    FILE* stream = file_opener( argv[1], "rb", __FUNCTION__, __FILE__, __LINE__);
     if (stream == NULL) return 1;
     
     //!читаем весь текст в один буфер
@@ -21,43 +30,42 @@ int main(void)
     fclose(stream);
     
     //!создаем массив указателей на буфер с текстом
-    size_t len = 2 * n_check(buffer_commands) + 1;
-    char** mas_str = make_mass(buffer_commands, len);
-    changer(&buffer_commands, '\n', '\0');
+    assembler.len = 2 * n_check(buffer_commands) + 1;
+    assembler.mas_str = make_mass(buffer_commands, assembler.len);
+    changer(&buffer_commands);
+    if (assembler.mas_str == NULL) return ERROR;
 
-    if (mas_str == NULL) return 1;
-    
     //!создаю массив с байт кодом
-    int* buffer_out = (int*) calloc (len, sizeof(int));
-    struct labels data_labels = {};
-    code_maker(buffer_out, mas_str, len, &data_labels);
-    len = code_maker(buffer_out, mas_str, len, &data_labels);
+    assembler.buffer_out = (int*) calloc (assembler.len, sizeof(int));
+
+    //!компиляция
+    size_t check_ret = byte_code_maker(&assembler, 1);
+    BYTE_CODE_ERROR
+    check_ret = byte_code_maker(&assembler, 2);
+    BYTE_CODE_ERROR
+
+    assembler.len = check_ret;
 
     //!создаём сигнатуру
-    signature_maker(buffer_out);
+    signature_maker(assembler.buffer_out);
 
     //!открываем файл с байткодом
-    FILE* stream_out = file_opener("SPU/translate_cmd.asm", "wb", __FUNCTION__, __FILE__, __LINE__);
+    assembler.stream_out = file_opener("SPU/translate_cmd.asm", "wb", __FUNCTION__, __FILE__, __LINE__);
     if (stream == NULL)
     {
-        free(buffer_commands);
-        free(buffer_out);
-        free(mas_str);
-        return 0;
+        asm_deleter(&assembler, buffer_commands);
+        return ERROR;
     }
 
     //!записываем файл с байткодом
-    fwrite(buffer_out, len, sizeof(buffer_out[0]), stream_out);
+    fwrite(assembler.buffer_out, assembler.len, sizeof(assembler.buffer_out[0]), assembler.stream_out);
 
     printf("succsesly assembled\n");
 
-    check_byte_code(buffer_out, len);
+    check_byte_code(assembler.buffer_out, assembler.len);
 
-    fclose(stream_out);
+    fclose(assembler.stream_out);
+    asm_deleter(&assembler, buffer_commands);
 
-    free(buffer_commands);
-    free(buffer_out);
-    free(mas_str);
-
-    return 0;
+    return SUCCSES;
 }
