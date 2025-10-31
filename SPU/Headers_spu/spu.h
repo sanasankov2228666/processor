@@ -116,6 +116,8 @@ int register_protection(int number_reg, FILE* stream_out);
 
 int check_func(struct spu data_spu);
 
+void create_spu(struct spu* data_spu);
+
 void spu_deleter (struct spu* data_spu);
 
 int spu_dump(struct spu data_spu, const char* func, const char* file, int LINE);

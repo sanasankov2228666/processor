@@ -8,9 +8,7 @@ typedef int type;
 int main(void)
 {
     struct spu data_spu = {};
-    stack_creator(&data_spu.main_stk, 10);
-
-    stack_creator(&data_spu.data_func, 10);
+    create_spu(&data_spu);
 
     slicer();
 

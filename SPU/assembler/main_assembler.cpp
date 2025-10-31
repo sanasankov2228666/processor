@@ -15,10 +15,9 @@ int main( int argc, char* argv[] )
         printf("ERROR the code file was not specified\n");
         return ERROR;
     }
-
+    
     struct main_str assembler = {};
-
-    //printf("%s\n\n", argv[1]);
+    
     //!открываем файл с командами
     FILE* stream = file_opener( argv[1], "rb", __FUNCTION__, __FILE__, __LINE__);
     if (stream == NULL) return 1;
@@ -34,11 +33,12 @@ int main( int argc, char* argv[] )
     assembler.mas_str = make_mass(buffer_commands, assembler.len);
     changer(&buffer_commands);
     if (assembler.mas_str == NULL) return ERROR;
-
+    
     //!создаю массив с байт кодом
     assembler.buffer_out = (int*) calloc (assembler.len, sizeof(int));
-
+    
     //!компиляция
+    hash_sort();
     size_t check_ret = byte_code_maker(&assembler, 1);
     BYTE_CODE_ERROR
     check_ret = byte_code_maker(&assembler, 2);

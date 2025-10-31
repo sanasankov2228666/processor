@@ -49,15 +49,29 @@ struct main_str
 };
 
 
-int compare_func(char* command);
-
 int* signature_maker(int* code);
+
+
+//-----------------------функции-хэша----------------------
+
+size_t hash_func(const char* str);
+
+int hash_cmp(const void* elem_1,const void* elem_2);
+
+void hash_sort();
+
+int hash_search_cmp(const void* key, const void* element);
+
+//---------------------------------------------------------
+
 
 //----------------------------------------------------ФУНКЦИИ-БАЙТКОДА------------------------------------------------------------
 
 size_t byte_code_maker(struct main_str* assembler, int asm_number);
 
 asm_err_t proccesing_label(struct main_str* assembler, size_t* pc_code, size_t* str_c, int asm_number);
+
+asm_err_t str_label_processing (struct main_str* assembler, size_t* pc_code, size_t* str_c);
 
 asm_err_t proccesing_witharg(struct main_str* assembler, size_t* pc_code, size_t* str_c, int asm_number);
 
@@ -68,6 +82,8 @@ asm_err_t proccesing_arg_label(struct main_str* assembler, char* curr_str, size_
 asm_err_t check_mem_arg(struct main_str* assembler, char* curr_str, size_t* pc_code, size_t* str_c);
 
 asm_err_t check_reg_syntax(char* curr_str, size_t* str_c);
+
+struct commands* recognizing_command(struct main_str* assembler, size_t* pc_code, size_t* str_c);
 
 //-------------------------------------------------------------------------------------------------------------------------------
 

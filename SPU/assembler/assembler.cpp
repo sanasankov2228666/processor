@@ -15,39 +15,81 @@ static struct commands
     const char* name;
     const int number;
     const int arg = 0;
+    size_t hash = 0;
 }
 
 
 //!массив комманд
 commands[NUMBER_COMMANDS] =
 {
-    {"PUSH",   PUSH,   1},        {"ADD",     ADD,     0},
-    {"SUB",    SUB,    0},        {"DIV",     DIV,     0},
-    {"MULT",   MULT,   0},        {"SQRT",    SQvRT,   0},
-    {"IN",     IN,     0},        {"HLT",     HLT,     0},
-    {"OUT",    OUT,    0},        {"PUSHREG", PUSHREG, 1},
-    {"POPREG", POPREG, 1},        {"PUSHM",   PUSHM,   1},
-    {"POPM",   POPM,   1},        {"JUMP",    JUMP,    1},
-    {"JB",     JB,     1},        {"JBE",     JBE,     1},
-    {"JA",     JA,     1},        {"JAE",     JAE,     1},
-    {"JE",     JE,     1},        {"JNE",     JNE,     1},
-    {"CALL",   CALL,   1},        {"RET",     RET,     0},
-    {"DRAW",   DRAW,   0}
+    {"PUSH",   PUSH,   1, hash_func("PUSH")    },
+    {"ADD",    ADD,    0, hash_func("ADD")     },
+    {"SUB",    SUB,    0, hash_func("SUB")     },
+    {"DIV",    DIV,    0, hash_func("DIV")     },
+    {"MULT",   MULT,   0, hash_func("MULT")    },
+    {"SQRT",   SQvRT,  0, hash_func("SQRT")    },
+    {"IN",     IN,     0, hash_func("IN")      },
+    {"HLT",    HLT,    0, hash_func("HLT")     },
+    {"OUT",    OUT,    0, hash_func("OUT")     },
+    {"PUSHREG",PUSHREG,1, hash_func("PUSHREG") },
+    {"POPREG", POPREG, 1, hash_func("POPREG")  },
+    {"PUSHM",  PUSHM,  1, hash_func("PUSHM")   },
+    {"POPM",   POPM,   1, hash_func("POPM")    },
+    {"JUMP",   JUMP,   1, hash_func("JUMP")    },
+    {"JB",     JB,     1, hash_func("JB")      },
+    {"JBE",    JBE,    1, hash_func("JBE")     },
+    {"JA",     JA,     1, hash_func("JA")      },
+    {"JAE",    JAE,    1, hash_func("JAE")     },
+    {"JE",     JE,     1, hash_func("JE")      },
+    {"JNE",    JNE,    1, hash_func("JNE")     },
+    {"CALL",   CALL,   1, hash_func("CALL")    },
+    {"RET",    RET,    0, hash_func("RET")     },
+    {"DRAW",   DRAW,   0, hash_func("DRAW")    }
 };
 
-
-//!функция переводящая команды
-int compare_func(char* command)
+size_t hash_func(const char* str)
 {
-    int swch = 0;
+    size_t index = 0;
+    size_t hash = 0;
+    size_t shift = 3;
 
-    for (int i = 0; i < NUMBER_COMMANDS && swch == 0; i++ )
+    while (str[index] != '\0')
     {
-        if (my_strcmp(command, commands[i].name) == 0) swch = commands[i].number;
+        hash += (size_t) str[index] * (1 << (shift * index));
+        index++;
     }
 
-    return swch;
+    return hash;
 }
+
+int hash_cmp(const void* elem_1,const void* elem_2)
+{
+    const struct commands* frst = (const struct commands*) elem_1;
+    const struct commands* scnd = (const struct commands*) elem_2;
+
+    if (frst->hash < scnd->hash) return -1;
+    if (frst->hash > scnd->hash) return 1;
+
+    return 0;
+}
+
+void hash_sort()
+{
+    qsort(commands, NUMBER_COMMANDS, sizeof(struct commands), hash_cmp);
+}
+
+
+int hash_search_cmp(const void* key, const void* element)
+{
+    size_t key_hash = *(size_t*)key;
+    const struct commands* cmd = (const struct commands*)element;
+    
+    if (key_hash < cmd->hash) return -1;
+    if (key_hash > cmd->hash) return 1;
+
+    return 0;
+}
+
 
 //---------------------------------------------СОЗДАНИЕ-БАЙТ-КОДА-----------------------------------------------------------------------------
 
@@ -56,6 +98,7 @@ size_t byte_code_maker(struct main_str* assembler, int asm_number)
 {
     size_t pc_code = 1;
     size_t str_c = 0;
+    struct commands* ptr_command = NULL;
 
     for (; (pc_code < assembler->len && str_c < assembler->len) ; pc_code++, str_c++)
     {
@@ -63,60 +106,61 @@ size_t byte_code_maker(struct main_str* assembler, int asm_number)
         if ((assembler->mas_str[str_c])[0] == '\0') return pc_code;
         while ((assembler->mas_str[str_c])[0] == '\n') str_c++;
 
-        assembler->buffer_out[pc_code] = compare_func(assembler->mas_str[str_c]);
-
-        printf("%d\n", assembler->buffer_out[pc_code]);
-        if (assembler->buffer_out[pc_code] == 0)
+        if ((assembler->mas_str[str_c])[0] == ':')
         {
-            if ((assembler->mas_str[str_c])[0] == ':')
-            {
-                if (proccesing_label(assembler, &pc_code, &str_c, asm_number)) return ERROR;
-                pc_code--;
-            }
-
-            else
-            {
-                printf("unrecognize command [%s] str: %zu\n", assembler->mas_str[str_c], str_c);
-                return ERROR;
-            }
+            if (proccesing_label(assembler, &pc_code, &str_c, asm_number)) return ERROR;
+            pc_code--;
         }
 
-        else if (commands[assembler->buffer_out[pc_code] - 1].arg == 1)
+        else
         {
-            pc_code++;
-            str_c++;
+            ptr_command = recognizing_command(assembler, &pc_code, &str_c);
+            if (ptr_command == NULL) return ERROR;
 
-            if (proccesing_witharg(assembler, &pc_code, &str_c, asm_number)) return ERROR;
+            if (ptr_command->arg == 1)
+            {
+                pc_code++;
+                str_c++;
+
+                if (proccesing_witharg(assembler, &pc_code, &str_c, asm_number)) return ERROR;
+            }
         }
     }
 
     return pc_code;
 }
 
+//!распознавание комманды
+struct commands* recognizing_command(struct main_str* assembler, size_t* pc_code, size_t* str_c)
+{
+    size_t hash = 0;
+    struct commands* ptr_command = NULL;
+
+    hash = hash_func(assembler->mas_str[*str_c]);
+        
+    ptr_command = (struct commands*) bsearch( &hash, commands, NUMBER_COMMANDS, sizeof(struct commands), hash_search_cmp);
+    if (ptr_command == NULL)
+    {
+        printf("unrecognize command [%s] str: %zu\n", assembler->mas_str[*str_c], *str_c);
+        return NULL;
+    }
+
+    else assembler->buffer_out[*pc_code] = ptr_command->number;
+
+    return ptr_command;
+}
+
 //!функция обработки комманды без аргумента
-int proccesing_label(struct main_str* assembler, size_t* pc_code, size_t* str_c, int asm_number)
+asm_err_t proccesing_label(struct main_str* assembler, size_t* pc_code, size_t* str_c, int asm_number)
 {
     if (asm_number == 2) return SUCCSES;
 
     char* ptr = assembler->mas_str[*str_c] + 1;
     int arg_val = 0;
-    char name_label[MAX_NAME_LBL] = {};
 
     if ( (sscanf(ptr, "%d", &arg_val)) == 0)
     {
-        //загнать в функцию---
-        assembler->lables.current_ptr++;
-        if (assembler->lables.current_ptr >= MAX_NAME_LBL)
-        {
-            printf("max number of labels is reached str: %zu", *str_c);
-        }
-
-        sscanf(ptr, "%s", name_label);
-        if (equal_label_check(assembler, name_label, str_c)) return ERROR;
-        sscanf(ptr, "%s", assembler->lables.str_labels[assembler->lables.current_ptr].name);
-
-        assembler->lables.str_labels[assembler->lables.current_ptr].num = (int) *pc_code;
-        //---
+        if (str_label_processing(assembler, pc_code, str_c)) return ERROR;
     }
 
     else
@@ -132,8 +176,10 @@ int proccesing_label(struct main_str* assembler, size_t* pc_code, size_t* str_c,
     return SUCCSES;
 }
 
+
+
 //!функция обработки комманды с аргументом
-int proccesing_witharg(struct main_str* assembler, size_t* pc_code, size_t* str_c, int asm_number)
+asm_err_t proccesing_witharg(struct main_str* assembler, size_t* pc_code, size_t* str_c, int asm_number)
 {
     char* curr_str = assembler->mas_str[*str_c];
     int arg_val = 0;
@@ -176,7 +222,27 @@ int proccesing_witharg(struct main_str* assembler, size_t* pc_code, size_t* str_
 
 //-------------------------------------------------ВСПОМОГАТЕЛЬНЫЕ-ФУНКЦИИ---------------------------------------------------------
 
-int equal_label_check(struct main_str* assembler, char* name_label, size_t* str_c)
+asm_err_t str_label_processing (struct main_str* assembler, size_t* pc_code, size_t* str_c)
+{
+    char* ptr = assembler->mas_str[*str_c] + 1;
+    char name_label[MAX_NAME_LBL] = {};
+
+    assembler->lables.current_ptr++;
+    if (assembler->lables.current_ptr >= MAX_NAME_LBL)
+    {
+        printf("max number of labels is reached str: %zu", *str_c);
+    }
+
+    sscanf(ptr, "%s", name_label);
+    if (equal_label_check(assembler, name_label, str_c)) return ERROR;
+    sscanf(ptr, "%s", assembler->lables.str_labels[assembler->lables.current_ptr].name);
+
+    assembler->lables.str_labels[assembler->lables.current_ptr].num = (int) *pc_code;
+
+    return SUCCSES;
+}
+
+asm_err_t equal_label_check(struct main_str* assembler, char* name_label, size_t* str_c)
 {
     for (int i = 0; i < STR_LBL_NUMBER; i++)
     {
@@ -189,7 +255,7 @@ int equal_label_check(struct main_str* assembler, char* name_label, size_t* str_
     return SUCCSES;
 }
 
-int proccesing_arg_label(struct main_str* assembler, char* curr_str, size_t* pc_code, size_t* str_c, int asm_number )
+asm_err_t proccesing_arg_label(struct main_str* assembler, char* curr_str, size_t* pc_code, size_t* str_c, int asm_number )
 {
     char name_label[MAX_NAME_LBL] = {};
     int cheaker = 1;
@@ -214,7 +280,7 @@ int proccesing_arg_label(struct main_str* assembler, char* curr_str, size_t* pc_
 }
 
 //!функция проверки синтаксиса для функция RAM
-int check_mem_arg(struct main_str* assembler, char* curr_str, size_t* pc_code, size_t* str_c)
+asm_err_t check_mem_arg(struct main_str* assembler, char* curr_str, size_t* pc_code, size_t* str_c)
 {
     int index = 0;
 
@@ -238,7 +304,7 @@ int check_mem_arg(struct main_str* assembler, char* curr_str, size_t* pc_code, s
 }
 
 //!фунция проверки синтаксиса регистров
-int check_reg_syntax(char* curr_str, size_t* str_c)
+asm_err_t check_reg_syntax(char* curr_str, size_t* str_c)
 {
     if ( toupper(curr_str[1]) != 'X')
     {

@@ -303,8 +303,8 @@ cmd_err_t cmd_ret(struct spu* data_spu)
 cmd_err_t cmd_draw(struct spu* data_spu)
 {
     printf("\n");
-    printf("--------------------V-RAM-OUTPUT--------------------\n");
-    for (int i_v = 0; i_v < VERTICAL_LEN; i_v++ )
+    //printf("--------------------V-RAM-OUTPUT--------------------\n");
+    for (size_t i_v = 0; i_v < VERTICAL_LEN; i_v++ )
     {
         for ( int i_h = 0; i_h < HORIZONTAL_LEN; i_h++)
         {
@@ -314,7 +314,6 @@ cmd_err_t cmd_draw(struct spu* data_spu)
         printf("   |\n");
     }
     printf("----------------------------------------------------\n");
-
     data_spu->counter++;
 
     return SUCCSES;
@@ -392,9 +391,23 @@ int check_func(struct spu data_spu)
     return 0;
 }
 
+void create_spu(struct spu* data_spu)
+{
+    stack_creator(&data_spu->main_stk, 10);
+    stack_creator(&data_spu->data_func, 10);
+}
+
 //!функция чистки процессора
 void spu_deleter(struct spu* data_spu)
-{
+{   
+    data_spu->len = 0;
+    data_spu->counter = 0;
+
+    for (int i = 0; i < NUM_REG; i++)
+    {
+        data_spu->reg[i] = 0;
+    }
+
     fclose(data_spu->stream_error);
     free(data_spu->code);
     stack_deleter(&data_spu->main_stk);
