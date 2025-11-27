@@ -25,7 +25,7 @@ int main( int argc, char* argv[] )
     //!читаем весь текст в один буфер
     char* buffer_commands = NULL;
     file_read(stream, &buffer_commands);
-    puts(buffer_commands);
+    //puts(buffer_commands);
     fclose(stream);
     
     //!создаем массив указателей на буфер с текстом
@@ -62,7 +62,7 @@ int main( int argc, char* argv[] )
 
     printf("succsesly assembled\n");
 
-    check_byte_code(assembler.buffer_out, assembler.len);
+    //check_byte_code(assembler.buffer_out, assembler.len);
 
     fclose(assembler.stream_out);
     asm_deleter(&assembler, buffer_commands);

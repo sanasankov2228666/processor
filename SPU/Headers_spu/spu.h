@@ -7,11 +7,11 @@
 #include "str_func.h"
 
 //! разрешение окна вывода
-#define HORIZONTAL_LEN  30
-#define VERTICAL_LEN    20
+#define HORIZONTAL_LEN  100
+#define VERTICAL_LEN    40
 
 //! параментры для прцоессора
-#define RAM_CAPACITY 600
+#define RAM_CAPACITY 4000
 #define NUM_REG      8
 
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -30,6 +30,14 @@ typedef cmd_err_t (*cmd_spu) (struct spu*);
 #define DBG(...) printf(__VA_ARGS__)
 #else
 #define DBG(...) //
+#endif
+
+#ifdef VIDEO_MODE
+#define VIDEO(...)  __VA_ARGS__
+#define BASIK_OUT(...)
+#else
+#define VIDEO(...) 
+#define BASIK_OUT(...)  __VA_ARGS__
 #endif
 
 #define CHECKER_FUNC int error = check_func(*data_spu);\

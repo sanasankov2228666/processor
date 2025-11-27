@@ -8,6 +8,14 @@
 
 typedef int type;
 
+
+
+#ifdef STK_DBG
+#define STK_CHECK(...) __VA_ARGS__
+#else 
+#define STK_CHECK(...) 
+#endif
+
 //!структура стека
 struct stk
 {

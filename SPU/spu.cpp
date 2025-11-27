@@ -1,7 +1,12 @@
 #include "../stack/headers/stack1.h"
+#include <unistd.h> 
+#include <time.h>
 
 //!включение режима дебага
 //#define DEBUG
+
+//!включение режима видео
+#define VIDEO_MODE
 
 #include "spu.h"
 
@@ -217,7 +222,7 @@ cmd_err_t cmd_pushreg(struct spu* data_spu)
     CHECKER_FUNC;
     data_spu->counter++;
 
-    REG_PROTECTOR
+    //REG_PROTECTOR
     stack_push(&data_spu->main_stk, data_spu->reg[data_spu->code[data_spu->counter]]);
     DBG("pushed from reg %c, value: %d\n",
     data_spu->code[data_spu->counter] + 65, data_spu->reg[data_spu->code[data_spu->counter]]);
@@ -248,7 +253,8 @@ cmd_err_t cmd_popm(struct spu* data_spu)
     REG_PROTECTOR;
     if (data_spu->reg[ data_spu->code [data_spu->counter] ] >= RAM_CAPACITY)
     {
-        fprintf(data_spu->stream_error, "the memory location does not exist\n");
+        fprintf(data_spu->stream_error, "the memory location does not exist %d\n",
+        data_spu->reg[ data_spu->code [data_spu->counter] ]);
         return ERROR;
     }
 
@@ -300,10 +306,11 @@ cmd_err_t cmd_ret(struct spu* data_spu)
     return SUCCSES;
 }
 
+BASIK_OUT(
 cmd_err_t cmd_draw(struct spu* data_spu)
 {
     printf("\n");
-    //printf("--------------------V-RAM-OUTPUT--------------------\n");
+    printf("--------------------V-RAM-OUTPUT--------------------\n");
     for (size_t i_v = 0; i_v < VERTICAL_LEN; i_v++ )
     {
         for ( int i_h = 0; i_h < HORIZONTAL_LEN; i_h++)
@@ -314,10 +321,50 @@ cmd_err_t cmd_draw(struct spu* data_spu)
         printf("   |\n");
     }
     printf("----------------------------------------------------\n");
+
     data_spu->counter++;
 
     return SUCCSES;
-}
+});
+
+VIDEO(
+cmd_err_t cmd_draw(struct spu* data_spu)
+{
+    static struct timespec last_time = {0, 0};
+    
+    struct timespec current_time;
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
+    
+    if (last_time.tv_sec == 0) 
+    {
+        last_time = current_time;
+    }
+    
+    long elapsed_ns = (current_time.tv_sec - last_time.tv_sec) * 1000000000L + 
+                     (current_time.tv_nsec - last_time.tv_nsec);
+    
+    const long frame_time_ns = 33333333L;
+    
+    if (elapsed_ns < frame_time_ns)
+    {
+        long sleep_ns = frame_time_ns - elapsed_ns;
+        struct timespec ts = {0, sleep_ns};
+        nanosleep(&ts, NULL);
+    }
+    
+    printf("\033[H");
+    
+    for (size_t i = 0; i < VERTICAL_LEN * HORIZONTAL_LEN; i++) 
+    {
+        printf("%c", data_spu->ram[i]);
+    }
+    fflush(stdout);
+    
+    clock_gettime(CLOCK_MONOTONIC, &last_time);
+
+    data_spu->counter++;
+    return SUCCSES;
+});
 
 //-------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -393,8 +440,8 @@ int check_func(struct spu data_spu)
 
 void create_spu(struct spu* data_spu)
 {
-    stack_creator(&data_spu->main_stk, 10);
-    stack_creator(&data_spu->data_func, 10);
+    stack_creator(&data_spu->main_stk, 1000000);
+    stack_creator(&data_spu->data_func, 100);
 }
 
 //!функция чистки процессора
