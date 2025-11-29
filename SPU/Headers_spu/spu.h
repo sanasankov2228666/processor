@@ -92,7 +92,7 @@ struct spu
     size_t len = 0;
     size_t counter = 1;
     int reg [NUM_REG] = {};
-    int ram [RAM_CAPACITY] = {};
+    int* ram = NULL;
     FILE* stream_error = NULL;
 };
 

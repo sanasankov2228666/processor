@@ -343,7 +343,7 @@ cmd_err_t cmd_draw(struct spu* data_spu)
     long elapsed_ns = (current_time.tv_sec - last_time.tv_sec) * 1000000000L + 
                      (current_time.tv_nsec - last_time.tv_nsec);
     
-    const long frame_time_ns = 33333333L;
+    const long frame_time_ns = 25000000L;
     
     if (elapsed_ns < frame_time_ns)
     {
@@ -442,6 +442,7 @@ void create_spu(struct spu* data_spu)
 {
     stack_creator(&data_spu->main_stk, 1000000);
     stack_creator(&data_spu->data_func, 100);
+    data_spu->ram = (int*) calloc (RAM_CAPACITY, sizeof(int));
 }
 
 //!функция чистки процессора
@@ -459,6 +460,8 @@ void spu_deleter(struct spu* data_spu)
     free(data_spu->code);
     stack_deleter(&data_spu->main_stk);
     stack_deleter(&data_spu->data_func);
+
+    free(data_spu->ram);
 
     printf("spu deleted\n");
     printf("-------------------------------------------------------------------------------------------\n");
